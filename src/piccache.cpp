@@ -78,36 +78,7 @@ int JY_PicInit(const char* PalletteFilename)
             pic_file[i].fp = NULL;
         }
     }
-    //CacheFailNum = 0;
-
-    JY_PicLoadFile("./data/wmap.idx", "./data/wmap.grp", 0, NULL, NULL);    //--特效贴图
-    JY_LoadPNGPath("./data/head", 1, 20000, g_ScreenW / 936 * 100, "png");
-    //JY_PicLoadFile("./data/thing.idx", "./data/thing.grp", 2, NULL, NULL);
-    JY_LoadPNGPath("./data/thing", 2, -1, 100, "png");
-    JY_PicLoadFile("./data/Eft.idx", "./data/Eft.grp", 3, NULL, NULL);    //--特效贴图
-    JY_LoadPNGPath("./data/body", 90, 20000, g_ScreenW / 936 * 100, "png");
-    JY_LoadPNGPath("./data/xt", 91, 20000, g_ScreenW / 936 * 100, "png");
-    JY_PicLoadFile("./data/bj.idx", "./data/bj.grp", 92, NULL, NULL);
-    JY_LoadPNGPath("./data/mmap", 93, -1, 100, "png");
-    JY_LoadPNGPath("./data/smap", 94, -1, 100, "png");
-    //JY_PicLoadFile("./data/smap.idx", "./data/smap.grp", 94, 0, 0);
-    JY_LoadPNGPath("./data/portrait", 95, 20000, g_ScreenW / 936 * 100, "png");
-    JY_LoadPNGPath("./data/ui", 96, 20000, g_ScreenW / 936 * 100, "png");
-    JY_LoadPNGPath("./data/cloud", 97, -1, 100, "png");
-    JY_LoadPNGPath("./data/icons", 98, 20000, g_ScreenW / 936 * 100, "png");
-    JY_LoadPNGPath("./data/head", 99, 20000, 26.923076923, "png");
-    for (i = 101; i < 1000; i++)
-    {
-        char figidx[512];
-        char figgrp[512];
-        sprintf(figidx, "./data/fight/fight%03d.idx", i - 101);
-        sprintf(figgrp, "./data/fight/fight%03d.grp", i - 101);
-        if (FileExists(figidx) && FileExists(figgrp))
-        {
-            JY_PicLoadFile(figidx, figgrp, i, NULL, NULL);
-        }
-    }
-
+  
     return 0;
 }
 
