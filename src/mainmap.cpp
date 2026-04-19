@@ -9,6 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// 内部前置声明
+static int LoadMMap_Sub(const char* filename, Sint16** p);
+static int LoadMMap_Part(int read, int x, int y);
+static int LoadMMap_Part_Sub(FILE* fp, Sint16** p);
+static int BuildingSort(short x, short y, short Mypic);
+
 //主地图数据
 Sint16* pEarth = NULL;
 Sint16* pSurface = NULL;
@@ -115,7 +121,7 @@ int JY_LoadMMap(const char* earthname, const char* surfacename, const char* buil
 }
 
 //全部读取主地图
-int LoadMMap_Sub(const char* filename, Sint16** p)
+static int LoadMMap_Sub(const char* filename, Sint16** p)
 {
     FILE* fp;
 
@@ -138,7 +144,7 @@ int LoadMMap_Sub(const char* filename, Sint16** p)
 
 //部分读取主地图数据
 // read 0 根据需要读取  1 强制读取
-int LoadMMap_Part(int read, int x, int y)
+static int LoadMMap_Part(int read, int x, int y)
 {
     int x1, y1, x2, y2;
 
@@ -188,7 +194,7 @@ int LoadMMap_Part(int read, int x, int y)
     return 0;
 }
 
-int LoadMMap_Part_Sub(FILE* fp, Sint16** p)    //部分读取每个主地图
+static int LoadMMap_Part_Sub(FILE* fp, Sint16** p)    //部分读取每个主地图
 {
     int i;
 
@@ -463,7 +469,7 @@ int JY_SetMMap(short x, short y, int flag, short v)
 // 主地图建筑排序
 // x,y 主角坐标
 // Mypic 主角贴图编号
-int BuildingSort(short x, short y, short Mypic)
+static int BuildingSort(short x, short y, short Mypic)
 {
     int rangex = g_ScreenW / (2 * g_XScale * g_Zoom) / 2 + 1 + g_MMapAddX;
     int rangey = g_ScreenH / (2 * g_YScale * g_Zoom) / 2 + 1;

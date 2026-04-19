@@ -1,16 +1,15 @@
-﻿#pragma once
+﻿// 字体与字符集转换模块
+#pragma once
 
 #include "SDL3_ttf/SDL_ttf.h"
 
-//CharSet.c
-
-typedef struct UseFont_Type {      // 定义当前使用的字体结构
-    int size;                      //字号，单位像素
-    char *name;                    //字体文件名
-    TTF_Font *font;                //打开的字体
+typedef struct UseFont_Type {    // 已打开的字体信息
+    int size;                    // 字号（像素）
+    char *name;                  // 字体文件名
+    TTF_Font *font;              // 字体句柄
 }UseFont;
 
-#define FONTNUM 10                 //定义同时打开的字体个数
+#define FONTNUM 10               // 同时打开的最大字体数
 
 //初始化字体
 int InitFont();

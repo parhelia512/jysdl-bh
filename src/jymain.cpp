@@ -10,11 +10,22 @@
 #include <stdio.h>
 #include <time.h>
 
+// 避免 jymain.h 中的 BOOL/TRUE/FALSE 宏污染 Windows 头文件
+#ifdef BOOL
+#undef BOOL
+#endif
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#endif
+
 #include "spdlog/spdlog.h"
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-// 全程变量
+// 全局变量
 SDL_Window* g_Window = NULL;
 SDL_Renderer* g_Renderer = NULL;
 SDL_Texture* g_Texture = NULL;
@@ -44,19 +55,17 @@ int g_SMapAddX;
 int g_SMapAddY;
 int g_WMapAddX;
 int g_WMapAddY;
-int g_BJ = 0;
 int g_MAXCacheNum = 1000;    //最大缓存数量
 int g_LoadFullS = 1;         //是否全部加载S文件
 int g_LoadMMapType = 0;      //是否全部加载M文件
 int g_LoadMMapScope = 0;
-//int g_PreLoadPicGrp = 1;    //是否预先加载贴图文件的grp
-int IsDebug = 0;         //是否打开跟踪文件
-char JYMain_Lua[255];    //lua主函数
-int g_MP3 = 0;           //是否打开MP3
-char g_MidSF2[255];      //音色库对应的文件
-float g_Zoom = 1;        //图片放大
-char g_Softener[255];    //音色库对应的文件
-int g_DelayTimes;
+int g_IsDebug = 0;           //是否打开调试日志
+char g_MainLuaFile[255];     //lua主脚本文件
+int g_MP3 = 0;               //是否使用MP3格式音乐
+char g_MidSF2[255];          //MIDI音色库文件路径
+float g_Zoom = 1;            //图片缩放比例
+char g_Softener[255];        //柔化滤镜名称
+int g_DelayTimes;            //延迟帧数
 
 #ifdef _WIN32
 const char* JY_CurrentPath = "./";
@@ -69,7 +78,25 @@ lua_State* pL_main = NULL;
 void* g_Tinypot;
 ParticleExample g_Particle;
 
-std::shared_ptr<spdlog::logger> g_logger_debug, g_logger_error;
+std::shared_ptr<spdlog::logger> g_LogDebug, g_LogError;
+
+static int JY_LogV(const std::shared_ptr<spdlog::logger>& logger, spdlog::level::level_enum level, const char* fmt, va_list args)
+{
+    if (!logger || !fmt)
+    {
+        return -1;
+    }
+
+    char buffer[2048];
+    int n = vsnprintf(buffer, sizeof(buffer), fmt, args);
+    if (n < 0)
+    {
+        return -1;
+    }
+
+    logger->log(level, "{}", buffer);
+    return 0;
+}
 
 //定义的lua接口函数名
 const struct luaL_Reg jylib[] = {
@@ -198,20 +225,23 @@ int main(int argc, char* argv[])
 #endif
     //lua_State* pL_main;
     srand(time(0));
-    remove(DEBUG_FILE);
-    remove(ERROR_FILE);    //设置stderr输出到文件
 
+    // 初始化日志
     spdlog::set_level(spdlog::level::debug);
 
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(DEBUG_FILE, true);
-    auto file_sink2 = std::make_shared<spdlog::sinks::basic_file_sink_mt>(ERROR_FILE, true);
-    spdlog::sinks_init_list sink_list = { console_sink, file_sink };
-    spdlog::sinks_init_list sink_list2 = { console_sink, file_sink2 };
+    auto debug_file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(DEBUG_FILE, true);
+    auto error_file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(ERROR_FILE, true);
 
-    g_logger_debug = std::make_shared<spdlog::logger>("1", sink_list);
-    g_logger_debug->set_level(spdlog::level::debug);    // 设置日志级别为debug
-    g_logger_error = std::make_shared<spdlog::logger>("2", sink_list2);
+    g_LogDebug = std::make_shared<spdlog::logger>("jysdl.debug", spdlog::sinks_init_list{ console_sink, debug_file_sink });
+    g_LogError = std::make_shared<spdlog::logger>("jysdl.error", spdlog::sinks_init_list{ console_sink, error_file_sink });
+
+    g_LogDebug->set_level(spdlog::level::debug);
+    g_LogError->set_level(spdlog::level::err);
+    g_LogDebug->set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");
+    g_LogError->set_pattern("[%H:%M:%S.%e] [%^%l%$] %v");
+    g_LogDebug->flush_on(spdlog::level::err);
+    g_LogError->flush_on(spdlog::level::err);
 
     pL_main = luaL_newstate();
     luaL_openlibs(pL_main);
@@ -250,6 +280,8 @@ int main(int argc, char* argv[])
     //关闭lua
     lua_close(pL_main);
 
+    spdlog::shutdown();
+
     return 0;
 }
 
@@ -258,7 +290,7 @@ int Lua_Main(lua_State* pL_main)
 {
     int result = 0;
     do {
-        result = luaL_loadfile(pL_main, JYMain_Lua);
+        result = luaL_loadfile(pL_main, g_MainLuaFile);
         if (result)
         {
             break;
@@ -326,7 +358,7 @@ int Lua_Config(lua_State* pL, const char* filename)
     g_XScale = 18;
     g_YScale = 9;
     g_EnableSound = getfield(pL, "EnableSound");
-    IsDebug = getfield(pL, "Debug");
+    g_IsDebug = getfield(pL, "Debug");
     //g_Pic = getfield(pL, "Pic");
     g_MMapAddX = getfield(pL, "MMapAddX");
     g_MMapAddY = getfield(pL, "MMapAddY");
@@ -343,7 +375,7 @@ int Lua_Config(lua_State* pL, const char* filename)
     g_MP3 = getfield(pL, "MP3");
     g_Zoom = (float)(getfield(pL, "Zoom") / 100.0);
     getfieldstr(pL, "MidSF2", g_MidSF2);
-    getfieldstr(pL, "JYMain_Lua", JYMain_Lua);
+    getfieldstr(pL, "JYMain_Lua", g_MainLuaFile);
     getfieldstr(pL, "Softener", g_Softener);
     return 0;
 }
@@ -369,32 +401,26 @@ int getfieldstr(lua_State* pL, const char* key, char* str)
     return 0;
 }
 
-//以下为几个通用函数
-// 调试函数
-// 输出到debug.txt中
+// ============ 通用工具函数 ============
 
+// 输出调试信息到 debug.log
 int JY_Debug(const char* fmt, ...)
 {
     va_list argptr;
-    char string[1024];
     va_start(argptr, fmt);
-    vsnprintf(string, sizeof(string), fmt, argptr);
+    int ret = JY_LogV(g_LogDebug, spdlog::level::debug, fmt, argptr);
     va_end(argptr);
-    g_logger_debug->debug("{}", string);
-    return 0;
+    return ret;
 }
 
-// 调试函数
-// 输出到error.txt中
+// 输出错误信息到 error.log
 int JY_Error(const char* fmt, ...)
 {
     va_list argptr;
-    char string[1024];
     va_start(argptr, fmt);
-    vsnprintf(string, sizeof(string), fmt, argptr);
+    int ret = JY_LogV(g_LogError, spdlog::level::err, fmt, argptr);
     va_end(argptr);
-    g_logger_error->error("{}", string);
-    return 0;
+    return ret;
 }
 
 // 限制x大小

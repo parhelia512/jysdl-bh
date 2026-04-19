@@ -1,4 +1,4 @@
-﻿// 头文件
+﻿// 主头文件 - 全局声明与公共接口
 #pragma once
 
 #include "config.h"
@@ -6,9 +6,6 @@
 #include "SDL3/SDL.h"
 #include "SDL3_image/SDL_image.h"
 #include "SDL3_ttf/SDL_ttf.h"
-
-#include "bass.h"
-#include "bassmidi.h"
 
 extern "C"
 {
@@ -21,8 +18,11 @@ extern "C"
 
 #include "ParticleExample.h"
 
+#include <algorithm>  // for std::swap
 
-// 公共部分
+
+// 公共宏定义
+
 #ifndef BOOL
 #define BOOL unsigned char
 #endif
@@ -35,7 +35,7 @@ extern "C"
 
 #define swap16(x) (((x & 0x00ffU) << 8) | ((x & 0xff00U) >> 8))
 
-//安全free指针的宏
+// 安全释放指针
 #define SafeFree(p) \
     do { \
         if (p) \
@@ -45,73 +45,64 @@ extern "C"
         } \
     } while (0)
 
-//全程变量
-
+// 拼接当前工作路径与文件名
 #define _(f) va("%s%s", JY_CurrentPath, f)
 
+// 32位色RGBA掩码
 #define RMASK (0xff0000)
 #define GMASK (0xff00)
 #define BMASK (0xff)
 #define AMASK (0xff000000)
 
-// jymain.c
 
+// ============ 函数声明 ============
+
+// Lua 主流程
 int Lua_Main(lua_State* pL_main);
-
 int Lua_Config(lua_State* pL, const char* filename);
-
 int getfield(lua_State* pL, const char* key);
-
 int getfieldstr(lua_State* pL, const char* key, char* str);
 
-// 输出信息到文件debug.txt中
+// 日志输出
 int JY_Debug(const char* fmt, ...);
-
-// 输出信息到文件error.txt中
 int JY_Error(const char* fmt, ...);
 
-//限制 x在 xmin-xmax之间
+// 通用工具
 int limitX(int x, int xmin, int xmax);
-
-//检查文件是否存在
 int FileExists(const char* name);
-
-//取文件长度
 int FileLength(const char* filename);
-
 char* va(const char* format, ...);
 
-template <typename T>
-void swap(T& a, T& b)
-{
-    auto t = a;
-    a = b;
-    b = t;
-}
 
+// ============ 全局变量 ============
+
+// SDL 渲染相关
 extern SDL_Window* g_Window;
 extern SDL_Renderer* g_Renderer;
-extern SDL_Texture* g_Texture;
-extern SDL_Texture* g_TextureShow;
-extern SDL_Texture* g_TextureTmp;
+extern SDL_Texture* g_Texture;         // 主绘制纹理
+extern SDL_Texture* g_TextureShow;     // 显示用纹理
+extern SDL_Texture* g_TextureTmp;      // 临时纹理
+extern SDL_Surface* g_Surface;         // 游戏使用的表面
+extern Uint32 g_MaskColor32;           // 透明色
 
-extern SDL_Surface* g_Surface;    // 游戏使用的视频表面
-extern Uint32 g_MaskColor32;      // 透明色
-
-extern int g_Rotate;     //屏幕是否旋转
-extern int g_ScreenW;    // 屏幕宽高
-extern int g_ScreenH;
+// 屏幕设置
+extern int g_Rotate;       // 屏幕是否旋转
+extern int g_ScreenW;      // 屏幕宽度
+extern int g_ScreenH;      // 屏幕高度
 extern int g_ScreenBpp;    // 屏幕色深
-extern int g_FullScreen;
-extern int g_EnableSound;    // 声音开关 0 关闭 1 打开
-extern int g_MusicVolume;    // 音乐声音大小
-extern int g_SoundVolume;    // 音效声音大小
-extern int g_SwitchABXY;
+extern int g_FullScreen;   // 是否全屏
 
-extern int g_XScale;    //贴图x,y方向一半大小
-extern int g_YScale;
+// 声音设置
+extern int g_EnableSound;   // 声音开关 0关闭 1打开
+extern int g_MusicVolume;   // 音乐音量
+extern int g_SoundVolume;   // 音效音量
+extern int g_SwitchABXY;    // 是否交换AB键
 
-//各个地图绘制时xy方向需要多绘制的余量。保证可以全部显示
+// 贴图参数
+extern int g_XScale;    // 贴图X方向半宽
+extern int g_YScale;    // 贴图Y方向半高
+
+// 各地图绘制余量（保证完整显示）
 extern int g_MMapAddX;
 extern int g_MMapAddY;
 extern int g_SMapAddX;
@@ -119,23 +110,23 @@ extern int g_SMapAddY;
 extern int g_WMapAddX;
 extern int g_WMapAddY;
 
-extern int g_MAXCacheNum;     //最大缓存数量
-extern int g_LoadFullS;       //是否全部加载S文件
-extern int g_LoadMMapType;    //是否全部加载M文件
-extern int g_LoadMMapScope;
-//extern int g_PreLoadPicGrp;     //是否预先加载贴图文件的grp
-extern int IsDebug;             //是否打开跟踪文件
-extern char JYMain_Lua[255];    //lua主函数
-extern int g_MP3;               //是否打开MP3
-extern int g_BJ;                //是否打开MP3
-extern char g_MidSF2[255];      //音色库对应的文件
-extern float g_Zoom;            //图片放大
+// 缓存与加载
+extern int g_MAXCacheNum;      // 最大贴图缓存数量
+extern int g_LoadFullS;        // 是否全部加载S文件
+extern int g_LoadMMapType;     // 大地图加载模式
+extern int g_LoadMMapScope;    // 大地图加载范围
+
+// 运行参数
+extern int g_IsDebug;              // 是否开启调试日志
+extern char g_MainLuaFile[255];    // Lua主脚本文件路径
+extern int g_MP3;                  // 是否使用MP3格式音乐
+extern char g_MidSF2[255];        // MIDI音色库文件路径
+extern float g_Zoom;               // 图片缩放比例
+extern char g_Softener[255];      // 柔化滤镜名称
+extern int g_DelayTimes;          // 延迟帧数
+
 extern lua_State* pL_main;
-extern char g_Softener[255];    //是否柔化
 extern void* g_Tinypot;
-
 extern const char* JY_CurrentPath;
-
-extern int g_DelayTimes;
 
 extern ParticleExample g_Particle;

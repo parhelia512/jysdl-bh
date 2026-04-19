@@ -1,6 +1,8 @@
-﻿#pragma once
+﻿// SDL相关函数声明
+#pragma once
 #include "SDL3/SDL.h"
 
+// SDL属性辅助类
 struct Prop
 {
     SDL_PropertiesID id_;

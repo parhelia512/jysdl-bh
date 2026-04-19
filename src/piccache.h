@@ -1,8 +1,8 @@
-﻿#pragma once
+﻿// 贴图缓存模块
+#pragma once
 
 #include "SDL3/SDL.h"
 #include "ZipFile.h"
-//PicCache.c
 
 #define TEXTURE_NUM 10
 
@@ -61,7 +61,7 @@ struct PicFileCache                             //贴图文件链表节点
 int Init_Cache();
 int JY_PicInit(const char* PalletteFilename);
 int JY_PicLoadFile(const char* idxfilename, const char* grpfilename, int id, int width, int height);
-int JY_LoadPic(int fileid, int picid, int x, int y, int flag, int value,int color = 0, int width = -1, int height = -1, double angle = NULL, SDL_FlipMode reversal = SDL_FLIP_NONE, int percent = 100);
+int JY_LoadPic(int fileid, int picid, int x, int y, int flag, int value,int color = 0, int width = -1, int height = -1, double angle = 0.0, SDL_FlipMode reversal = SDL_FLIP_NONE, int percent = 100);
 int LoadPic(int fileid, int picid, struct CacheNode* cache);
 int JY_LoadPNGPath(const char* path, int fileid, int num, int percent, const char* suffix);
 int JY_LoadPNG(int fileid, int picid, int x, int y, int flag, int value, int percent);

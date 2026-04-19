@@ -1,5 +1,5 @@
 ﻿
-// lua中调用的C API接口
+// Lua调用的C API接口声明
 
 #ifndef __LUAFUN_H
 #define __LUAFUN_H
@@ -96,7 +96,6 @@ int Byte_set32(lua_State* pL);
 int Byte_getstr(lua_State* pL);
 int Byte_setstr(lua_State* pL);
 
-int HAPI_InitCache(lua_State* pL);
 int HAPI_LoadPic(lua_State* pL);
 
 int Config_GetPath(lua_State *pL);

@@ -153,7 +153,7 @@ int InitGame(void)
     int h = g_ScreenH;
     if (g_Rotate)
     {
-        swap(w, h);
+        std::swap(w, h);
     }
     //putenv ("SDL_VIDEO_WINDOW_POS");
     //putenv ("SDL_VIDEO_CENTERED=1");
@@ -506,14 +506,14 @@ int JY_GetKey(int* key, int* type, int* mx, int* my)
             SDL_GetWindowSize(g_Window, &win_w, &win_h);
             *mx = event.motion.x * g_ScreenW / win_w;
             *my = event.motion.y * g_ScreenH / win_h;
-            if (g_Rotate) { swap(*mx, *my); }
+            if (g_Rotate) { std::swap(*mx, *my); }
             *type = 2;
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:    //鼠标点击
             SDL_GetWindowSize(g_Window, &win_w, &win_h);
             *mx = event.motion.x * g_ScreenW / win_w;
             *my = event.motion.y * g_ScreenH / win_h;
-            if (g_Rotate) { swap(*mx, *my); }
+            if (g_Rotate) { std::swap(*mx, *my); }
             if (event.button.button == SDL_BUTTON_LEFT)    //左键
             {
                 *type = 3;
